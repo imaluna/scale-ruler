@@ -1,4 +1,4 @@
-import { isObject, deepMerge, floor, getGridSize, getOffset } from './utils'
+import { isObject, deepMerge, floor, getGridSize, getOffset } from './utils';
 const defaultOpt = {
   // 画布缩放比例
   scale: 1,
