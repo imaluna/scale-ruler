@@ -12,7 +12,6 @@ export default {
     name: 'ScaleRuler'
   },
   plugins: [
-    // todo
     eslint(),
     resolve(), // 解析 node_modules
     commonjs(), // 转换 CommonJS 为 ES 模块
