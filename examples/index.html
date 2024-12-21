@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+		<script src="../dist/index.js"></script>
+		<style>
+			body {
+				display: flex;
+				padding: 0;
+				margin: 0;
+				height: 100vh;
+			}
+			aside {
+				width: 200px;
+				height: 100%;
+			}
+			main {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				height: 100%;
+			}
+			header,
+			footer {
+				height: 100px;
+				width: 100%;
+			}
+			#wrap {
+				width: 100%;
+				flex: 1;
+				box-sizing: border-box;
+				border: 12px solid #ddd;
+			}
+		</style>
+	</head>
+	<body>
+		<aside>哈哈哈</aside>
+		<main>
+			<header>我是头部</header>
+			<div id="wrap"></div>
+			<footer>我是底部</footer>
+		</main>
+		<aside>lala</aside>
+	</body>
+	<script>
+		const ruler = new ScaleRuler({
+			el: '#wrap',
+			wrapAutoSize: true,
+			autoCenter: true,
+			autoScale: false,
+			canvasStyle: {
+				backgroundColor: 'pink'
+			}
+		});
+		const canvasEl = ruler.getCanvasEl();
+		canvasEl.innerHTML = '我的内容';
+		console.log(canvasEl);
+	</script>
+</html>
