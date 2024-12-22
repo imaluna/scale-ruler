@@ -11,5 +11,6 @@ module.exports = {
   },
   rules: {
     eqeqeq: 'error'
+    // 'prettier/prettier': ['error']
   }
 };

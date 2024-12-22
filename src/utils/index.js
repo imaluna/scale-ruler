@@ -30,7 +30,9 @@ export const floor = (num, decimal = 2) => {
   let mul = Math.pow(10, decimal);
   return +(Math.floor(num * mul) / mul).toFixed(decimal);
 };
-
+export const toFixed = (num, decimal = 2) => {
+  return +num.toFixed(decimal);
+};
 export const getGridSize = (scale) => {
   if (scale <= 0.25) return 40;
   if (scale <= 0.5) return 20;

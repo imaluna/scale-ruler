@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <button>点</button>
+    <script>
+      const canvas = document.createElement('canvas');
+      document.body.appendChild(canvas);
+      canvas.setAttribute('width', 300);
+      canvas.setAttribute('height', 500);
+      let ctx = canvas.getContext('2d');
+      ctx.fillRect(0, 0, 300, 500);
+      ctx.fillStyle = 'white';
+      ctx.fillText('哈哈哈', 20, 30);
+
+      document.querySelector('button').onclick = function () {
+        canvas.setAttribute('width', 400);
+        canvas.setAttribute('height', 500);
+        ctx.clearRect(0, 0, 400, 500);
+        ctx.fillStyle = 'pink';
+        ctx.fillRect(0, 0, 400, 500);
+        ctx.fillStyle = 'green';
+        ctx.fillText('哈哈哈', 20, 30);
+      };
+    </script>
+  </body>
+</html>

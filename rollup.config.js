@@ -7,7 +7,7 @@ import eslint from '@rollup/plugin-eslint';
 export default {
   input: 'src/index.js',
   output: {
-    file: 'dist/index.js',
+    file: 'lib/index.js',
     format: 'umd',
     name: 'ScaleRuler'
   },
@@ -18,6 +18,7 @@ export default {
     babel({
       babelHelpers: 'bundled',
       exclude: 'node_modules/**'
-    })
+    }),
+    // terser()
   ]
 };
