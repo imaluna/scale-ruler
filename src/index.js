@@ -1,4 +1,12 @@
-import { isObject, toFixed, deepMerge, getGridSize, getOffset } from './utils';
+import {
+  isObject,
+  toFixed,
+  deepMerge,
+  getGridSize,
+  getOffset,
+  setStyle,
+  getTargetCoordinate
+} from './utils';
 const defaultOpt = {
   // 画布缩放比例
   scale: 1,
@@ -66,13 +74,17 @@ const defaultOpt = {
   // 画布移动回调
   onMove: () => {}
 };
+
 Object.freeze(defaultOpt);
+
 export default class ScaleRuler {
   constructor(options) {
     this._init(options);
   }
   _init(options) {
-    this._checkObject(options);
+    if (!isObject(options)) {
+      throw TypeError('options必须为对象');
+    }
     const opt = deepMerge(defaultOpt, options);
     this._checkOptions(opt);
     // todo 所有的计算数据都改为私有变量，不让外部获取
@@ -85,14 +97,8 @@ export default class ScaleRuler {
     if (opt.proxyScaleKey) {
       document.addEventListener('keydown', this._keydownEvent);
     }
-    // 手指放大
     if (opt.showScrollBar) {
       opt.wheelTimer = null;
-    }
-  }
-  _checkObject(options) {
-    if (!isObject(options)) {
-      throw TypeError('options必须为对象');
     }
   }
   _checkOptions(opt) {
@@ -339,6 +345,7 @@ export default class ScaleRuler {
     function rulerMouseMoveEvent(e) {
       if (!rulerConfig.isMouseDown) return;
       e.preventDefault();
+      const targetCoordinate = getTargetCoordinate(e);
       const nodeInfo = positionLineConfig.currentNodeInfo;
       if (!nodeInfo) return;
       const { positionEl, dir, tipEl } = nodeInfo;
@@ -346,16 +353,17 @@ export default class ScaleRuler {
       let translate = 0;
       if (isY) {
         positionEl.style.visibility =
-          e.pageY > offset.top + rulerConfig.horizontalRulerHeight
+          targetCoordinate.pageY >
+          offset.top + rulerConfig.horizontalRulerHeight
             ? 'visible'
             : 'none';
-        translate = e.pageY - offset.top;
+        translate = targetCoordinate.pageY - offset.top;
       } else {
         positionEl.style.visibility =
-          e.pageX > offset.left + rulerConfig.verticalRulerWidth
+          targetCoordinate.pageX > offset.left + rulerConfig.verticalRulerWidth
             ? 'visible'
             : 'none';
-        translate = e.pageX - offset.left;
+        translate = targetCoordinate.pageX - offset.left;
       }
       const coordinate = self._getCoordinate(opt, dir, translate);
       // 检查吸附线
@@ -437,16 +445,12 @@ export default class ScaleRuler {
           transform: `translate(-50%, 0)`
         });
       }
-      for (let i in positionElStyle) {
-        positionEl.style[i] = positionElStyle[i];
-      }
-      for (let i in lineElStyle) {
-        lineEl.style[i] = lineElStyle[i];
-      }
-      for (let i in tipElStyle) {
-        tipEl.style[i] = tipElStyle[i];
-      }
+      setStyle(positionEl, positionElStyle);
+      setStyle(lineEl, lineElStyle);
+      setStyle(tipEl, tipElStyle);
+
       positionEl.setAttribute('data-id', positionLineConfig.id);
+
       positionEl.appendChild(lineEl);
       positionEl.appendChild(tipEl);
       positionLineWrapEl.appendChild(positionEl);
@@ -464,13 +468,19 @@ export default class ScaleRuler {
       document.addEventListener('mouseup', (e) => {
         if (!rulerConfig.isMouseDown) return;
         rulerConfig.isMouseDown = false;
+        const targetCoordinate = getTargetCoordinate(e);
+
         const nodeInfo = positionLineConfig.currentNodeInfo;
         if (nodeInfo) {
           const { positionEl, dir, tipEl, id } = nodeInfo;
           const isY = dir === 'y';
           if (
-            (!isY && e.pageX <= offset.left + rulerConfig.verticalRulerWidth) ||
-            (isY && e.pageY <= offset.top + rulerConfig.horizontalRulerHeight)
+            (!isY &&
+              targetCoordinate.pageX <=
+                offset.left + rulerConfig.verticalRulerWidth) ||
+            (isY &&
+              targetCoordinate.pageY <=
+                offset.top + rulerConfig.horizontalRulerHeight)
           ) {
             positionLineWrapEl.removeChild(positionEl);
             delete positionLineConfig.lines[id];
@@ -531,7 +541,9 @@ export default class ScaleRuler {
     positionEl.addEventListener('mousedown', (e) => {
       e.preventDefault();
       positionLineConfig.isMouseDown = true;
-      nodeInfo.start = dir === 'y' ? e.pageY : e.pageX;
+      const targetCoordinate = getTargetCoordinate(e);
+      nodeInfo.start =
+        dir === 'y' ? targetCoordinate.pageY : targetCoordinate.pageX;
       nodeInfo.originTranslate = nodeInfo.translate;
       nodeInfo.tipEl.style.display = 'block';
       positionLineConfig.currentNodeInfo = nodeInfo;
@@ -542,9 +554,12 @@ export default class ScaleRuler {
       if (!positionLineConfig.isMouseDown) return;
       e.preventDefault();
       const nodeInfo = positionLineConfig.currentNodeInfo;
+      const targetCoordinate = getTargetCoordinate(e);
+
       const { dir, tipEl, start, originTranslate = 0, positionEl } = nodeInfo;
       const isY = dir === 'y';
-      const move = (isY ? e.pageY : e.pageX) - start;
+      const move =
+        (isY ? targetCoordinate.pageY : targetCoordinate.pageX) - start;
       let translate = originTranslate + move;
       // 更新坐标数据
       const coordinate = self._getCoordinate(self.opt, dir, translate);
@@ -562,9 +577,15 @@ export default class ScaleRuler {
       if (nodeInfo) {
         const { positionEl, dir, id } = nodeInfo;
         const isY = dir === 'y';
+        const targetCoordinate = getTargetCoordinate(e);
+
         if (
-          (!isY && e.pageX <= offset.left + rulerConfig.verticalRulerWidth) ||
-          (isY && e.pageY <= offset.top + rulerConfig.horizontalRulerHeight)
+          (!isY &&
+            targetCoordinate.pageX <=
+              offset.left + rulerConfig.verticalRulerWidth) ||
+          (isY &&
+            targetCoordinate.pageY <=
+              offset.top + rulerConfig.horizontalRulerHeight)
         ) {
           positionEl.parentNode.removeChild(positionEl);
           delete positionLineConfig.lines[id];
@@ -841,16 +862,16 @@ export default class ScaleRuler {
       styles.bottom = 0;
       styles.height = '8px';
     }
-    for (let i in styles) {
-      bar.style[i] = styles[i];
-    }
+    setStyle(bar, styles);
     const mousemoveEvent = function (e) {
       e.preventDefault();
       if (!opt.scrollConfig.isDown) return;
       const { scrollConfig, canvasConfig } = opt;
       let { translateX, translateY } = canvasConfig;
+      const targetCoordinate = getTargetCoordinate(e);
+
       if (isVertical) {
-        let move = e.pageY - scrollConfig.startY;
+        let move = targetCoordinate.pageY - scrollConfig.startY;
         let barTop = scrollConfig.top + move;
         barTop = Math.min(
           Math.max(0, barTop),
@@ -860,7 +881,7 @@ export default class ScaleRuler {
         const top = (barTop * canvasConfig.totalHeight) / opt.height;
         translateY = opt.verticalPadding - top;
       } else {
-        let move = e.pageX - scrollConfig.startX;
+        let move = targetCoordinate.pageX - scrollConfig.startX;
         let barLeft = scrollConfig.left + move;
         barLeft = Math.min(
           Math.max(0, barLeft),
@@ -875,12 +896,14 @@ export default class ScaleRuler {
     };
     const mousedownEvent = function (e) {
       scrollConfig.isDown = true;
+      const targetCoordinate = getTargetCoordinate(e);
+
       if (isVertical) {
-        scrollConfig.startY = e.pageY;
+        scrollConfig.startY = targetCoordinate.pageY;
         scrollConfig.top = parseFloat(this.style.top);
       } else {
         scrollConfig.left = parseFloat(this.style.left);
-        scrollConfig.startX = e.pageX;
+        scrollConfig.startX = targetCoordinate.pageX;
       }
       document.addEventListener('mousemove', mousemoveEvent);
     };

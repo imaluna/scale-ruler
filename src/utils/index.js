@@ -1,10 +1,11 @@
-export const getDataType = (data) => {
+const getDataType = (data) => {
   return Object.prototype.toString.call(data).slice(8, -1).toLowerCase();
 };
-
+// 是否为对象
 export const isObject = (data) => {
   return getDataType(data) === 'object';
 };
+// 合并
 export const deepMerge = (data1, data2) => {
   const data = {};
   for (let i in data1) {
@@ -41,7 +42,7 @@ export const getGridSize = (scale) => {
   if (scale <= 4) return 2;
   return 1;
 };
-
+// 获取元素的offsetTop和offsetLeft
 export const getOffset = (node) => {
   const rect = node.getBoundingClientRect();
   const top =
@@ -50,4 +51,24 @@ export const getOffset = (node) => {
     rect.left +
     (document.body.scrollLeft || document.documentElement.scrollLeft);
   return { top, left };
+};
+// 设置样式
+export const setStyle = (node, styles) => {
+  for (let i in styles) {
+    node.style[i] = styles[i];
+  }
+};
+// 获取点击target的pageX和pageY
+export const getTargetCoordinate = (e) => {
+  const pageX =
+    e.pageX ||
+    (document.body.scrollLeft || document.documentElement.scrollLeft) +
+      e.clienntX ||
+    0;
+  const pageY =
+    e.pageY ||
+    (document.body.scrollTop || document.documentElement.scrollTop) +
+      e.clienntY ||
+    0;
+  return { pageX, pageY };
 };
