@@ -8,7 +8,7 @@ export const isObject = (data) => {
 // 合并
 export const deepMerge = (data1, data2) => {
   const data = {};
-  for (let i in data1) {
+  for (const i in data1) {
     if (i in data2) {
       if (isObject(data1[i] && isObject(data2[i]))) {
         data[i] = deepMerge(data1[i], data2[i]);
@@ -19,7 +19,7 @@ export const deepMerge = (data1, data2) => {
       data[i] = data1[i];
     }
   }
-  for (let i in data2) {
+  for (const i in data2) {
     if (!(i in data1)) {
       data[i] = data2[i];
     }
@@ -28,7 +28,7 @@ export const deepMerge = (data1, data2) => {
 };
 
 export const floor = (num, decimal = 2) => {
-  let mul = Math.pow(10, decimal);
+  const mul = Math.pow(10, decimal);
   return +(Math.floor(num * mul) / mul).toFixed(decimal);
 };
 export const toFixed = (num, decimal = 2) => {
@@ -54,7 +54,7 @@ export const getOffset = (node) => {
 };
 // 设置样式
 export const setStyle = (node, styles) => {
-  for (let i in styles) {
+  for (const i in styles) {
     node.style[i] = styles[i];
   }
 };

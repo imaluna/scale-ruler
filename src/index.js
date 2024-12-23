@@ -133,7 +133,7 @@ export default class ScaleRuler {
     const keyCode = e.keyCode;
     if ((e.metaKey || e.ctrlKey) && (keyCode === 187 || keyCode === 189)) {
       e.preventDefault();
-      let newScale = this.opt.scale + (keyCode === 187 ? 0.05 : -0.05);
+      const newScale = this.opt.scale + (keyCode === 187 ? 0.05 : -0.05);
       this.changeScale(newScale);
     }
   }
@@ -205,7 +205,7 @@ export default class ScaleRuler {
     const { containerEl, containerConfig } = opt;
     containerConfig.addResize = true;
     const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
+      for (const entry of entries) {
         if (entry.target === containerEl) {
           const width = containerEl.offsetWidth;
           const height = containerEl.offsetHeight;
@@ -506,9 +506,9 @@ export default class ScaleRuler {
   _checkAdSorptionLine(coordinate, dir, translate) {
     const { adsorptionXList, adsorptionYList, adsorpGap } =
       this.opt.positionLineConfig;
-    let list = dir === 'y' ? adsorptionYList : adsorptionXList;
+    const list = dir === 'y' ? adsorptionYList : adsorptionXList;
     const res = { coordinate, translate };
-    let len = list.length;
+    const len = list.length;
     if (len > 0) {
       let start = 0;
       while (start < len) {
@@ -560,7 +560,7 @@ export default class ScaleRuler {
       const isY = dir === 'y';
       const move =
         (isY ? targetCoordinate.pageY : targetCoordinate.pageX) - start;
-      let translate = originTranslate + move;
+      const translate = originTranslate + move;
       // 更新坐标数据
       const coordinate = self._getCoordinate(self.opt, dir, translate);
       // 检查吸附线
@@ -632,7 +632,8 @@ export default class ScaleRuler {
     }
     canvas.style.width = opt.canvasWidth + 'px';
     canvas.style.height = opt.canvasHeight + 'px';
-    let { scale, autoScale, autoCenter } = opt;
+    let { scale } = opt;
+    const { autoScale, autoCenter } = opt;
 
     // 自动计算缩放比例
     if (autoScale) {
@@ -653,7 +654,7 @@ export default class ScaleRuler {
     opt.scale = scale;
 
     if (isObject(opt.canvasStyle)) {
-      for (let i in opt.canvasStyle) {
+      for (const i in opt.canvasStyle) {
         opt.canvasEl.style[i] = opt.canvasStyle[i];
       }
     }
@@ -661,7 +662,7 @@ export default class ScaleRuler {
     this._checkLarge();
   }
   _transform(translateX, translateY) {
-    let { opt } = this;
+    const { opt } = this;
     const { scale, canvasConfig } = opt;
     opt.canvasEl.style.transform = `translate(${translateX}px, ${
       translateY
@@ -682,7 +683,7 @@ export default class ScaleRuler {
   }
   // 检查与wrap的大小
   _checkLarge() {
-    let { opt } = this;
+    const { opt } = this;
     const {
       scale,
       canvasConfig,
@@ -714,12 +715,12 @@ export default class ScaleRuler {
           opt.hScrollBar = this._createScollBar(false);
         }
         // 滚动条左边距离
-        let left = opt.horizontalPadding - translateX;
+        const left = opt.horizontalPadding - translateX;
         opt.hScrollBar.style.left = opt.width * (left / totalWidth) + 'px';
         // 滚动条宽度百分比
         const percentage = opt.width / totalWidth;
         // 滚动条宽度
-        let width = percentage * opt.width;
+        const width = percentage * opt.width;
         opt.hScrollBar.style.width = width + 'px';
         scrollConfig.width = width;
       }
@@ -733,10 +734,10 @@ export default class ScaleRuler {
         }
         verticalDisplay = 'block';
 
-        let top = opt.verticalPadding - translateY;
+        const top = opt.verticalPadding - translateY;
         opt.vScollBar.style.top = opt.height * (top / totalHeight) + 'px';
         const percentage = opt.height / totalHeight;
-        let height = percentage * opt.height;
+        const height = percentage * opt.height;
         opt.vScollBar.style.height = height + 'px';
         scrollConfig.height = height;
       }
@@ -773,7 +774,7 @@ export default class ScaleRuler {
       const newScale = this.opt.scale + changeScale;
       this.changeScale(newScale);
     } else {
-      let {
+      const {
         scrollConfig,
         containerConfig,
         canvasConfig,
@@ -798,7 +799,7 @@ export default class ScaleRuler {
           Math.min(translateX, canvasConfig.maxTranslateX),
           canvasConfig.minTranslateX
         );
-        let left = this.opt.horizontalPadding - translateX;
+        const left = this.opt.horizontalPadding - translateX;
         // 展示
         hScrollBar.style.opacity = opacity;
         if (vScollBar) vScollBar.style.opacity = 0;
@@ -818,7 +819,7 @@ export default class ScaleRuler {
         vScollBar.style.opacity = opacity;
         if (hScrollBar) hScrollBar.style.opacity = 0;
 
-        let top = this.opt.verticalPadding - translateY;
+        const top = this.opt.verticalPadding - translateY;
         vScollBar.style.top =
           this.opt.height * (top / canvasConfig.totalHeight) + 'px';
         this._transform(translateX, translateY);
@@ -844,7 +845,7 @@ export default class ScaleRuler {
     const { opt } = this;
     const { scrollConfig } = opt;
     const self = this;
-    let bar = document.createElement('div');
+    const bar = document.createElement('div');
     const styles = {
       position: 'absolute',
       display: 'none',
@@ -871,7 +872,7 @@ export default class ScaleRuler {
       const targetCoordinate = getTargetCoordinate(e);
 
       if (isVertical) {
-        let move = targetCoordinate.pageY - scrollConfig.startY;
+        const move = targetCoordinate.pageY - scrollConfig.startY;
         let barTop = scrollConfig.top + move;
         barTop = Math.min(
           Math.max(0, barTop),
@@ -881,7 +882,7 @@ export default class ScaleRuler {
         const top = (barTop * canvasConfig.totalHeight) / opt.height;
         translateY = opt.verticalPadding - top;
       } else {
-        let move = targetCoordinate.pageX - scrollConfig.startX;
+        const move = targetCoordinate.pageX - scrollConfig.startX;
         let barLeft = scrollConfig.left + move;
         barLeft = Math.min(
           Math.max(0, barLeft),
@@ -981,7 +982,7 @@ export default class ScaleRuler {
   // 改变大小
   changeScale(newScale) {
     const { opt } = this;
-    let { scale, canvasConfig } = opt;
+    const { scale, canvasConfig } = opt;
     let { translateX, translateY } = canvasConfig;
     newScale = Math.min(Math.max(newScale, opt.minScale), opt.maxScale);
     const change = newScale - scale;
