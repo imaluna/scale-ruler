@@ -63,12 +63,16 @@ export const getTargetCoordinate = (e) => {
   const pageX =
     e.pageX ||
     (document.body.scrollLeft || document.documentElement.scrollLeft) +
-      e.clienntX ||
+      e.clientX ||
     0;
   const pageY =
     e.pageY ||
     (document.body.scrollTop || document.documentElement.scrollTop) +
-      e.clienntY ||
+      e.clientY ||
     0;
   return { pageX, pageY };
+};
+// 创建div
+export const createDiv = () => {
+  return document.createElement('div');
 };

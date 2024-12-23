@@ -38,6 +38,9 @@
   <body>
     <aside>
       <button id="btn">点击改变</button>
+      <button id="btn2">删除定位线</button>
+      <button id="btn3">隐藏定位线</button>
+      <button id="btn4">显示定位线</button>
     </aside>
     <main>
       <header>我是头部</header>
@@ -79,13 +82,22 @@
       rect.style.left = '300px';
       rect.style.top = '200px';
       canvasEl.appendChild(rect);
-      ruler.addAdsortptionLine([
+      ruler.addAdsorptionLine([
         { dir: 'x', value: 300 },
         { dir: 'x', value: 500 },
         { dir: 'y', value: 200 },
         { dir: 'y', value: 500 },
       ]);
     };
+		document.querySelector('#btn2').onclick = () => {
+			ruler.removeAllPositionLine();
+		}
+		document.querySelector('#btn3').onclick = () => {
+			ruler.hideAllPositionLine();
+		}
+		document.querySelector('#btn4').onclick = () => {
+			ruler.showAllPositionLine();
+		}
     console.log(ruler);
   </script>
 </html>

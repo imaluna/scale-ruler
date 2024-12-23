@@ -5,7 +5,8 @@ import {
   getGridSize,
   getOffset,
   setStyle,
-  getTargetCoordinate
+  getTargetCoordinate,
+  createDiv
 } from './utils';
 const defaultOpt = {
   // 画布缩放比例
@@ -43,7 +44,7 @@ const defaultOpt = {
     adsorptionXList: [],
     adsorptionYList: [],
     // 吸附距离
-    adsorpGap: 4
+    adsorptionGap: 4
   },
   // 画布的样式
   canvasStyle: {},
@@ -95,7 +96,7 @@ export default class ScaleRuler {
     this._initCanvas();
 
     if (opt.proxyScaleKey) {
-      document.addEventListener('keydown', this._keydownEvent);
+      document.addEventListener('keydown', this._keydownEvent.bind(this));
     }
     if (opt.showScrollBar) {
       opt.wheelTimer = null;
@@ -128,7 +129,7 @@ export default class ScaleRuler {
       throw Error('minScale不能大于maxScale');
     }
   }
-  // 快捷键放大缩小
+  // 代理快捷键缩放
   _keydownEvent(e) {
     const keyCode = e.keyCode;
     if ((e.metaKey || e.ctrlKey) && (keyCode === 187 || keyCode === 189)) {
@@ -221,6 +222,7 @@ export default class ScaleRuler {
     });
     resizeObserver.observe(containerEl);
   }
+  // 重绘标尺
   _repaintRuler(isVertical) {
     const { opt } = this;
     const { rulerConfig, canvasConfig, scale } = opt;
@@ -316,19 +318,21 @@ export default class ScaleRuler {
     opt.vRuler.setAttribute('height', opt.height);
     opt.vRuler.setAttribute('width', rulerConfig.verticalRulerWidth);
   }
+  // 创建标尺
   _createRuler(isVertical) {
     const { opt } = this;
     const ruler = document.createElement('canvas');
     ruler.style.position = 'absolute';
     ruler.style.left = 0;
     ruler.style.top = 0;
-    ruler.style.zIndex = isVertical ? 100 : 101;
+    ruler.style.zIndex = isVertical ? 400 : 401;
     opt.containerEl.appendChild(ruler);
     if (opt.usePositionLine) {
       this._initPositionLine(opt, isVertical, ruler);
     }
     return ruler;
   }
+  // 初始化定位线
   _initPositionLine(opt, isVertical, ruler) {
     const { positionLineConfig, rulerConfig } = opt;
     positionLineConfig.id = positionLineConfig.id || 0;
@@ -336,7 +340,7 @@ export default class ScaleRuler {
     const { lineColor, padding } = positionLineConfig;
     let positionLineWrapEl = positionLineConfig.positionLineWrapEl;
     if (!positionLineWrapEl) {
-      positionLineWrapEl = document.createElement('div');
+      positionLineWrapEl = createDiv();
       positionLineConfig.positionLineWrapEl = positionLineWrapEl;
       opt.containerEl.appendChild(positionLineWrapEl);
     }
@@ -365,30 +369,30 @@ export default class ScaleRuler {
             : 'none';
         translate = targetCoordinate.pageX - offset.left;
       }
-      const coordinate = self._getCoordinate(opt, dir, translate);
+      const coordinate = self._translateToCoordinate(opt, dir, translate);
       // 检查吸附线
       const info = self._checkAdSorptionLine(coordinate, dir, translate);
-      self._changeNodeTranslate(dir, info.translate, positionEl);
+      self._setLineTranslate(dir, info.translate, positionEl);
+      self._checkTipPosition(info.translate, dir, positionEl, tipEl);
       nodeInfo.translate = info.translate;
       nodeInfo.coordinate = info.coordinate;
       tipEl.innerHTML = `${dir.toUpperCase()}: ${toFixed(info.coordinate)} px`;
     }
     ruler.addEventListener('mousedown', () => {
       rulerConfig.isMouseDown = true;
-      const positionEl = document.createElement('div');
+      const positionEl = createDiv();
       const positionElStyle = {
         position: 'absolute',
         visibility: 'hidden',
         backgroundColor: 'transparent',
-        zIndex: 1000
+        zIndex: 300
       };
-      const lineEl = document.createElement('div');
+      const lineEl = createDiv();
       const lineElStyle = {
         position: 'absolute',
         backgroundColor: lineColor
       };
-      // todo 根据定位线的位置判断tipEl的位置，以免遮挡
-      const tipEl = document.createElement('div');
+      const tipEl = createDiv();
       const tipElStyle = {
         position: 'absolute',
         padding: '5px',
@@ -402,9 +406,10 @@ export default class ScaleRuler {
         textAlign: 'center'
       };
       let dir = 'y';
+      const positionSize = 2 * padding + 1;
       if (isVertical) {
         Object.assign(positionElStyle, {
-          width: 2 * padding + 1 + 'px',
+          width: positionSize + 'px',
           height: opt.height + 'px',
           cursor: 'col-resize',
           top: 0,
@@ -419,14 +424,14 @@ export default class ScaleRuler {
         });
         Object.assign(tipElStyle, {
           top: '50%',
-          right: 2 * padding + 6 + 'px',
+          left: positionSize + 'px',
           transform: `translate(0, -50%)`
         });
         // 水平方向定位线
         dir = 'x';
       } else {
         Object.assign(positionElStyle, {
-          height: 2 * padding + 1 + 'px',
+          height: positionSize + 'px',
           width: opt.width + 'px',
           cursor: 'row-resize',
           left: 0,
@@ -441,7 +446,7 @@ export default class ScaleRuler {
         });
         Object.assign(tipElStyle, {
           left: '50%',
-          bottom: 2 * padding + 6 + 'px',
+          top: positionSize + 'px',
           transform: `translate(-50%, 0)`
         });
       }
@@ -487,7 +492,7 @@ export default class ScaleRuler {
           } else {
             tipEl.style.display = 'none';
             // positionEl事件监听
-            this._addPosisitionLineEvent(nodeInfo, offset);
+            this._addPositionLineEvent(nodeInfo, offset);
           }
         }
         positionLineConfig.currentNodeInfo = null;
@@ -495,16 +500,10 @@ export default class ScaleRuler {
       });
     });
   }
-  _coordinateToTranslate(coordinate, dir) {
-    const { scale, canvasConfig } = this.opt;
-    const { translateX, translateY } = canvasConfig;
-    const distance = coordinate * scale;
-    const translate = (dir === 'y' ? translateY : translateX) + distance;
-    return translate;
-  }
+
   // 检查吸附线
   _checkAdSorptionLine(coordinate, dir, translate) {
-    const { adsorptionXList, adsorptionYList, adsorpGap } =
+    const { adsorptionXList, adsorptionYList, adsorptionGap } =
       this.opt.positionLineConfig;
     const list = dir === 'y' ? adsorptionYList : adsorptionXList;
     const res = { coordinate, translate };
@@ -513,7 +512,7 @@ export default class ScaleRuler {
       let start = 0;
       while (start < len) {
         const value = list[start];
-        if (Math.abs(coordinate - value) <= adsorpGap) {
+        if (Math.abs(coordinate - value) <= adsorptionGap) {
           // 可以吸附
           res.coordinate = value;
           res.translate = this._coordinateToTranslate(value, dir);
@@ -528,8 +527,8 @@ export default class ScaleRuler {
     }
     return res;
   }
-  // 给定位线增加事件监听
-  _addPosisitionLineEvent(nodeInfo, offset) {
+  // 定位线增加事件监听
+  _addPositionLineEvent(nodeInfo, offset) {
     const { positionEl, tipEl, dir } = nodeInfo;
     const { positionLineConfig, rulerConfig } = this.opt;
     positionEl.addEventListener('mouseenter', () => {
@@ -544,11 +543,12 @@ export default class ScaleRuler {
       const targetCoordinate = getTargetCoordinate(e);
       nodeInfo.start =
         dir === 'y' ? targetCoordinate.pageY : targetCoordinate.pageX;
+      positionEl.style.transition = '';
       nodeInfo.originTranslate = nodeInfo.translate;
       nodeInfo.tipEl.style.display = 'block';
       positionLineConfig.currentNodeInfo = nodeInfo;
-      document.addEventListener('mousemove', positionLineMoveEvent);
     });
+    document.addEventListener('mousemove', positionLineMoveEvent);
     const self = this;
     function positionLineMoveEvent(e) {
       if (!positionLineConfig.isMouseDown) return;
@@ -562,10 +562,11 @@ export default class ScaleRuler {
         (isY ? targetCoordinate.pageY : targetCoordinate.pageX) - start;
       const translate = originTranslate + move;
       // 更新坐标数据
-      const coordinate = self._getCoordinate(self.opt, dir, translate);
+      const coordinate = self._translateToCoordinate(self.opt, dir, translate);
       // 检查吸附线
       const info = self._checkAdSorptionLine(coordinate, dir, translate);
-      self._changeNodeTranslate(dir, info.translate, positionEl);
+      self._setLineTranslate(dir, info.translate, positionEl);
+      self._checkTipPosition(info.translate, dir, positionEl, tipEl);
       nodeInfo.translate = info.translate;
       nodeInfo.coordinate = info.coordinate;
       tipEl.innerHTML = `${dir.toUpperCase()}: ${toFixed(info.coordinate)} px`;
@@ -598,7 +599,16 @@ export default class ScaleRuler {
       document.removeEventListener('mousemove', positionLineMoveEvent);
     });
   }
-  _getCoordinate(opt, dir, translate) {
+  // 坐标换算为定位线的translate
+  _coordinateToTranslate(coordinate, dir) {
+    const { scale, canvasConfig } = this.opt;
+    const { translateX, translateY } = canvasConfig;
+    const distance = coordinate * scale;
+    const translate = (dir === 'y' ? translateY : translateX) + distance;
+    return translate;
+  }
+  // translate换算为坐标
+  _translateToCoordinate(opt, dir, translate) {
     const { scale, canvasConfig } = opt;
     const { translateX, translateY } = canvasConfig;
     const distance = translate - (dir === 'y' ? translateY : translateX);
@@ -609,7 +619,7 @@ export default class ScaleRuler {
     const { opt } = this;
     let canvas = opt.canvasEl;
     if (!canvas) {
-      canvas = document.createElement('div');
+      canvas = createDiv();
       canvas.style.position = 'absolute';
       canvas.style.left = 0;
       canvas.style.top = 0;
@@ -618,7 +628,7 @@ export default class ScaleRuler {
       canvas.style.transformOrigin = '0 0';
       opt.canvasEl = canvas;
       // 增加四个边坐标的吸附线
-      this._modifyAdsortptionLine([
+      this._modifyAdsorptionLine([
         { value: opt.canvasWidth, dir: 'x' },
         { value: 0, dir: 'x' },
         { value: 0, dir: 'y' },
@@ -649,6 +659,8 @@ export default class ScaleRuler {
     if (autoCenter) {
       translateX = Math.floor((opt.width - realWidth) / 2);
       translateY = Math.floor((opt.height - realHeight) / 2);
+      opt.canvasConfig.translateX = translateX;
+      opt.canvasConfig.translateY = translateY;
     }
     this._setTranslateBoundary(realWidth, realHeight);
     opt.scale = scale;
@@ -658,30 +670,27 @@ export default class ScaleRuler {
         opt.canvasEl.style[i] = opt.canvasStyle[i];
       }
     }
-    this._transform(translateX, translateY, true);
+    this._transformCanvas();
     this._checkLarge();
   }
-  _transform(translateX, translateY) {
+  // 移动或缩放画布
+  _transformCanvas() {
     const { opt } = this;
     const { scale, canvasConfig } = opt;
-    opt.canvasEl.style.transform = `translate(${translateX}px, ${
-      translateY
+    opt.canvasEl.style.transform = `translate(${canvasConfig.translateX}px, ${
+      canvasConfig.translateY
     }px) scale(${scale})`;
 
-    const changeX = translateX - canvasConfig.translateX;
-    const changeY = translateY - canvasConfig.translateY;
-    canvasConfig.translateX = translateX;
-    canvasConfig.translateY = translateY;
     if (opt.showRuler) {
       this._repaintRuler(false);
       this._repaintRuler(true);
     }
     // 改变所有定位线的translate
     if (opt.usePositionLine) {
-      this._changeLinesTranslate(changeX, changeY);
+      this._changeLinesTranslate();
     }
   }
-  // 检查与wrap的大小
+  // 检查画布与容器的大小
   _checkLarge() {
     const { opt } = this;
     const {
@@ -712,7 +721,7 @@ export default class ScaleRuler {
         horizontalDisplay = 'block';
         // 未展示过滚动条
         if (!opt.hScrollBar) {
-          opt.hScrollBar = this._createScollBar(false);
+          opt.hScrollBar = this._createScrollBar(false);
         }
         // 滚动条左边距离
         const left = opt.horizontalPadding - translateX;
@@ -729,57 +738,75 @@ export default class ScaleRuler {
       }
 
       if (isYLarge) {
-        if (!opt.vScollBar) {
-          opt.vScollBar = this._createScollBar(true);
+        if (!opt.vScrollBar) {
+          opt.vScrollBar = this._createScrollBar(true);
         }
         verticalDisplay = 'block';
 
         const top = opt.verticalPadding - translateY;
-        opt.vScollBar.style.top = opt.height * (top / totalHeight) + 'px';
+        opt.vScrollBar.style.top = opt.height * (top / totalHeight) + 'px';
         const percentage = opt.height / totalHeight;
         const height = percentage * opt.height;
-        opt.vScollBar.style.height = height + 'px';
+        opt.vScrollBar.style.height = height + 'px';
         scrollConfig.height = height;
       }
-      if (opt.vScollBar) {
-        opt.vScollBar.style.display = verticalDisplay;
+      if (opt.vScrollBar) {
+        opt.vScrollBar.style.display = verticalDisplay;
       }
     }
   }
   // 移动单个定位线
-  _changeNodeTranslate(dir, translate, node) {
+  _setLineTranslate(dir, translate, node) {
     const transform = dir === 'y' ? `0, ${translate}px` : `${translate}px, 0`;
     node.style.transform = `translate(${transform})`;
   }
-  // 改变定位线的tranlate,不改变坐标值
-  _changeLinesTranslate(changeX, changeY) {
+  // 改变定位线的translate,不改变坐标值
+  _changeLinesTranslate() {
     const { opt } = this;
     const { lines } = opt.positionLineConfig;
     const ids = Object.keys(lines);
     ids.forEach((id) => {
       const nodeInfo = lines[id];
-      const { dir, positionEl } = nodeInfo;
-      let { translate } = nodeInfo;
-      translate += dir === 'y' ? changeY : changeX;
-      this._changeNodeTranslate(dir, translate, positionEl);
+      const { dir, positionEl, coordinate, tipEl } = nodeInfo;
+      positionEl.style.transition = 'transform 300ms';
+      const translate = this._coordinateToTranslate(coordinate, dir);
+      this._setLineTranslate(dir, translate, positionEl);
+      this._checkTipPosition(translate, dir, positionEl, tipEl);
       nodeInfo.translate = translate;
     });
+  }
+  // 检查提示坐标元素的位置
+  _checkTipPosition(translate, dir, positionEl, tipEl) {
+    const isY = dir === 'y';
+    const { width, height } = this.opt;
+    if (isY) {
+      const tipH = tipEl.offsetHeight;
+      const positionH = positionEl.offsetHeight;
+      const top = translate + positionH + tipH >= height ? -tipH : positionH;
+      tipEl.style.top = top + 'px';
+    } else {
+      const tipW = tipEl.offsetWidth;
+      const positionW = positionEl.offsetWidth;
+      const left = translate + positionW + tipW >= width ? -tipW : positionW;
+      tipEl.style.left = left + 'px';
+    }
   }
   // 鼠标滚轮事件
   _mousewheelEvent(e) {
     e.preventDefault();
-    // 双指事件
+    // 双指缩放事件
     if (e.metaKey || e.ctrlKey) {
       const changeScale = (-1 * e.deltaY) / 100;
       const newScale = this.opt.scale + changeScale;
       this.changeScale(newScale);
     } else {
+      // 单支
       const {
         scrollConfig,
         containerConfig,
         canvasConfig,
         hScrollBar,
-        vScollBar
+        vScrollBar
       } = this.opt;
       if (!containerConfig.isLarge || scrollConfig.isDown) return;
       e.preventDefault();
@@ -802,10 +829,10 @@ export default class ScaleRuler {
         const left = this.opt.horizontalPadding - translateX;
         // 展示
         hScrollBar.style.opacity = opacity;
-        if (vScollBar) vScollBar.style.opacity = 0;
+        if (vScrollBar) vScrollBar.style.opacity = 0;
         hScrollBar.style.left =
           this.opt.width * (left / canvasConfig.totalWidth) + 'px';
-        this._transform(translateX, translateY);
+        canvasConfig.translateX = translateX;
         this._onMove(translateX, translateY);
       }
       if (containerConfig.isYLarge && Math.abs(moveY) > Math.abs(moveX)) {
@@ -816,20 +843,21 @@ export default class ScaleRuler {
           canvasConfig.minTranslateY
         );
         // 展示
-        vScollBar.style.opacity = opacity;
+        vScrollBar.style.opacity = opacity;
         if (hScrollBar) hScrollBar.style.opacity = 0;
 
         const top = this.opt.verticalPadding - translateY;
-        vScollBar.style.top =
+        vScrollBar.style.top =
           this.opt.height * (top / canvasConfig.totalHeight) + 'px';
-        this._transform(translateX, translateY);
+        canvasConfig.translateY = translateY;
         this._onMove(translateX, translateY);
       }
+      this._transformCanvas();
       // 不滚动后300ms隐藏滚动条
       if (scrollDirection) {
         this.opt.wheelTimer = setTimeout(() => {
           if (this.opt.scrollConfig.isMouseEnter) return;
-          const bar = scrollDirection === 'h' ? hScrollBar : vScollBar;
+          const bar = scrollDirection === 'h' ? hScrollBar : vScrollBar;
           bar.style.opacity = 0;
         }, 1000);
       }
@@ -841,11 +869,10 @@ export default class ScaleRuler {
       this.opt.onMove(translateX, translateY);
     }
   }
-  _createScollBar(isVertical) {
+  // 创建滚动条
+  _createScrollBar(isVertical) {
     const { opt } = this;
-    const { scrollConfig } = opt;
-    const self = this;
-    const bar = document.createElement('div');
+    const bar = createDiv();
     const styles = {
       position: 'absolute',
       display: 'none',
@@ -854,7 +881,7 @@ export default class ScaleRuler {
       opacity: 0,
       transition: 'opacity 300ms',
       cursor: 'pointer',
-      zIndex: 200
+      zIndex: 500
     };
     if (isVertical) {
       styles.right = 0;
@@ -864,10 +891,18 @@ export default class ScaleRuler {
       styles.height = '8px';
     }
     setStyle(bar, styles);
-    const mousemoveEvent = function (e) {
+    // 滚动条事件绑定
+    this._addScrollBarEvent(bar, isVertical);
+    opt.containerEl.appendChild(bar);
+    return bar;
+  }
+  // 滚动条事件绑定
+  _addScrollBarEvent(bar, isVertical) {
+    const { opt } = this;
+    const { scrollConfig, canvasConfig } = opt;
+    const mousemoveEvent = (e) => {
       e.preventDefault();
-      if (!opt.scrollConfig.isDown) return;
-      const { scrollConfig, canvasConfig } = opt;
+      if (!scrollConfig.isMouseDown) return;
       let { translateX, translateY } = canvasConfig;
       const targetCoordinate = getTargetCoordinate(e);
 
@@ -881,6 +916,7 @@ export default class ScaleRuler {
         bar.style.top = barTop + 'px';
         const top = (barTop * canvasConfig.totalHeight) / opt.height;
         translateY = opt.verticalPadding - top;
+        canvasConfig.translateY = translateY;
       } else {
         const move = targetCoordinate.pageX - scrollConfig.startX;
         let barLeft = scrollConfig.left + move;
@@ -891,19 +927,20 @@ export default class ScaleRuler {
         bar.style.left = barLeft + 'px';
         const left = (barLeft * canvasConfig.totalWidth) / opt.width;
         translateX = opt.horizontalPadding - left;
+        canvasConfig.translateX = translateX;
       }
-      self._transform(translateX, translateY);
-      self.onMove(translateX, translateY);
+      this._transformCanvas();
+      this._onMove(translateX, translateY);
     };
     const mousedownEvent = function (e) {
-      scrollConfig.isDown = true;
+      e.preventDefault();
+      scrollConfig.isMouseDown = true;
       const targetCoordinate = getTargetCoordinate(e);
-
       if (isVertical) {
         scrollConfig.startY = targetCoordinate.pageY;
-        scrollConfig.top = parseFloat(this.style.top);
+        scrollConfig.top = parseFloat(bar.style.top);
       } else {
-        scrollConfig.left = parseFloat(this.style.left);
+        scrollConfig.left = parseFloat(bar.style.left);
         scrollConfig.startX = targetCoordinate.pageX;
       }
       document.addEventListener('mousemove', mousemoveEvent);
@@ -919,7 +956,7 @@ export default class ScaleRuler {
       }
     });
     bar.addEventListener('mouseleave', () => {
-      if (scrollConfig.isDown) return;
+      if (scrollConfig.isMouseDown) return;
       scrollConfig.isMouseEnter = false;
       bar.style.opacity = 0;
     });
@@ -927,30 +964,14 @@ export default class ScaleRuler {
     bar.addEventListener('mousedown', mousedownEvent);
     // 鼠标按下松开
     document.addEventListener('mouseup', () => {
-      scrollConfig.isDown = false;
+      if (!scrollConfig.isMouseDown) return;
+      scrollConfig.isMouseDown = false;
       scrollConfig.isMouseEnter = false;
       document.removeEventListener('mousemove', mousemoveEvent);
     });
-    opt.containerEl.appendChild(bar);
-    return bar;
-  }
-
-  // 获取画布元素
-  getCanvasEl() {
-    return this.opt.canvasEl;
-  }
-  // 更新画布的宽高
-  updateCanvasRect({ canvasWidth, canvasHeight }) {
-    if (canvasHeight) {
-      this.opt.canvasHeight = canvasHeight;
-    }
-    if (canvasWidth) {
-      this.opt.canvasWidth = canvasWidth;
-    }
-    this._initCanvas();
   }
   // 修改吸附线
-  _modifyAdsortptionLine(data, remove = false) {
+  _modifyAdsorptionLine(data, remove = false) {
     const { adsorptionXList, adsorptionYList } = this.opt.positionLineConfig;
     data.forEach(({ dir, value }) => {
       const list = dir === 'y' ? adsorptionYList : adsorptionXList;
@@ -971,13 +992,27 @@ export default class ScaleRuler {
       adsorptionYList.sort((a, b) => a - b);
     }
   }
+  // 获取画布元素
+  getCanvasEl() {
+    return this.opt.canvasEl;
+  }
+  // 更新画布的宽高
+  updateCanvasRect({ width, height }) {
+    if (height) {
+      this.opt.canvasHeight = height;
+    }
+    if (width) {
+      this.opt.canvasWidth = width;
+    }
+    this._initCanvas();
+  }
   // 删除吸附线
-  removeAdsotptionLine(data) {
-    this._modifyAdsortptionLine(data, true);
+  removeAdsorptionLine(data) {
+    this._modifyAdsorptionLine(data, true);
   }
   // 增加吸附线
-  addAdsortptionLine(data) {
-    this._modifyAdsortptionLine(data);
+  addAdsorptionLine(data) {
+    this._modifyAdsorptionLine(data);
   }
   // 改变大小
   changeScale(newScale) {
@@ -1004,12 +1039,38 @@ export default class ScaleRuler {
       Math.min(translateY, canvasConfig.maxTranslateY),
       canvasConfig.minTranslateY
     );
-
-    this._transform(translateX, translateY);
+    canvasConfig.translateX = translateX;
+    canvasConfig.translateY = translateY;
+    this._transformCanvas();
     // 回调onScale
     if (typeof opt.onScale === 'function') {
       opt.onScale(opt.scale);
     }
     this._checkLarge();
+  }
+  // 删除所有定位线
+  removeAllPositionLine() {
+    const { lines, positionLineWrapEl } = this.opt.positionLineConfig;
+    for (const id in lines) {
+      const { positionEl } = lines[id];
+      positionLineWrapEl.removeChild(positionEl);
+    }
+    this.opt.positionLineConfig.lines = [];
+  }
+  // 隐藏
+  hideAllPositionLine() {
+    const { lines } = this.opt.positionLineConfig;
+    for (const id in lines) {
+      const { positionEl } = lines[id];
+      positionEl.style.display = 'none';
+    }
+  }
+  // 显示定位线
+  showAllPositionLine() {
+    const { lines } = this.opt.positionLineConfig;
+    for (const id in lines) {
+      const { positionEl } = lines[id];
+      positionEl.style.display = 'block';
+    }
   }
 }
