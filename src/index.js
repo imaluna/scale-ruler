@@ -11,6 +11,8 @@ import {
 const defaultOpt = {
   // 画布缩放比例
   scale: 1,
+  // 是否允许缩放
+  canScale: true,
   // 最大缩放比例
   maxScale: 10,
   // 最小缩放比例
@@ -88,7 +90,6 @@ export default class ScaleRuler {
     }
     const opt = deepMerge(defaultOpt, options);
     this._checkOptions(opt);
-    // todo 所有的计算数据都改为私有变量，不让外部获取
     opt.containerConfig = {};
     opt.canvasConfig = {};
     this.opt = opt;
@@ -102,6 +103,7 @@ export default class ScaleRuler {
       opt.wheelTimer = null;
     }
   }
+  // 检查参数
   _checkOptions(opt) {
     if (!opt.el) {
       throw Error('容器不能为空');
@@ -131,14 +133,15 @@ export default class ScaleRuler {
   }
   // 代理快捷键缩放
   _keydownEvent(e) {
-    const keyCode = e.keyCode;
-    if ((e.metaKey || e.ctrlKey) && (keyCode === 187 || keyCode === 189)) {
-      e.preventDefault();
-      const newScale = this.opt.scale + (keyCode === 187 ? 0.05 : -0.05);
-      this.changeScale(newScale);
+    if (this.opt.canScale) {
+      const keyCode = e.keyCode;
+      if ((e.metaKey || e.ctrlKey) && (keyCode === 187 || keyCode === 189)) {
+        e.preventDefault();
+        const newScale = this.opt.scale + (keyCode === 187 ? 0.05 : -0.05);
+        this.changeScale(newScale);
+      }
     }
   }
-
   // 获取移动边界
   _setTranslateBoundary(realWidth, realHeight) {
     const { opt } = this;
@@ -623,7 +626,6 @@ export default class ScaleRuler {
       canvas.style.position = 'absolute';
       canvas.style.left = 0;
       canvas.style.top = 0;
-      // todo 移动的时候取消给定位线添加缓动参数
       canvas.style.transition = 'transform 300ms';
       canvas.style.transformOrigin = '0 0';
       opt.canvasEl = canvas;
@@ -664,7 +666,12 @@ export default class ScaleRuler {
     }
     this._setTranslateBoundary(realWidth, realHeight);
     opt.scale = scale;
-
+    // 画布初始位置
+    opt.canvasConfig.originTransform = {
+      scale,
+      translateX,
+      translateY
+    };
     if (isObject(opt.canvasStyle)) {
       for (const i in opt.canvasStyle) {
         opt.canvasEl.style[i] = opt.canvasStyle[i];
@@ -1016,6 +1023,7 @@ export default class ScaleRuler {
   }
   // 改变大小
   changeScale(newScale) {
+    if (!this.opt.canScale) return;
     const { opt } = this;
     const { scale, canvasConfig } = opt;
     let { translateX, translateY } = canvasConfig;
@@ -1071,6 +1079,35 @@ export default class ScaleRuler {
     for (const id in lines) {
       const { positionEl } = lines[id];
       positionEl.style.display = 'block';
+    }
+  }
+  // 隐藏标尺
+  hideRuler() {
+    const { opt } = this;
+    if (opt.hRuler) opt.hRuler.display = 'none';
+    if (opt.vRuler) opt.vRuler.display = 'none';
+    // 同时隐藏定位线
+    this.hideAllPositionLine();
+  }
+  showRuler() {
+    const { opt } = this;
+    if (opt.hRuler) opt.hRuler.display = 'block';
+    if (opt.vRuler) opt.vRuler.display = 'block';
+    // 同时显示定位线
+    this.showAllPositionLine();
+  }
+  // 禁止缩放
+  forbiddenScale() {
+    this.opt.canScale = false;
+  }
+  // 允许缩放
+  allowScale() {
+    this.opt.canScale = true;
+  }
+  // 还原
+  reset() {
+    const { originTransform } = this.opt.canvasConfig;
+    if (originTransform) {
     }
   }
 }

@@ -2,13 +2,31 @@
   "name": "scale-ruler",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "keywords": [
+    "scale",
+    "ruler",
+    "photoshop",
+    "canvas",
+    "scroll",
+    "lowcode"
+  ],
+  "main": "lib/index.min.js",
+  "module": "lib/index.esm.js",
+  "jsnext:main": "lib/index.esm.js",
+  "browser": "lib/index.min.js",
+  "unpkg": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/imaluna/scale-ruler"
+  },
   "scripts": {
-    "build": "rollup -c build/rollup.prd.js",
+    "clean": "rimraf lib",
+    "build": "npm run clean && rollup -c build/rollup.prd.js",
     "dev": "rollup -c build/rollup.dev.js -w",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.js\"",
+    "publish": "npm publish",
     "prepare": "husky install"
   },
   "lint-staged": {
@@ -17,9 +35,20 @@
       "eslint --fix"
     ]
   },
-  "keywords": [],
-  "author": "",
+  "author": "imaluna<https://github.com/imaluna/scale-ruler.git",
+  "homepage": "https://github.com/imaluna/scale-ruler#readme",
+  "private": false,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "files": [
+    "lib"
+  ],
   "license": "ISC",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "devDependencies": {
     "@babel/core": "^7.26.0",
     "@babel/eslint-parser": "^7.25.9",
@@ -37,6 +66,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.2.11",
     "prettier": "^3.4.2",
+    "rimraf": "^6.0.1",
     "rollup": "^4.29.1"
   }
 }
