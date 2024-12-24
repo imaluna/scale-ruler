@@ -1117,7 +1117,7 @@ export default class ScaleRuler {
   }
   // 还原
   reset() {
-    const { originTransform } = this.opt.canvasConfig
+    const { originTransform } = this.opt.canvasConfig;
     if (originTransform) {
       const { scale, translateX, translateY } = originTransform;
       this.opt.scale = scale;
