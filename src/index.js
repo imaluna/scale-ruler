@@ -37,7 +37,7 @@ const defaultOpt = {
   // 是否展示滚动条
   showScrollBar: true,
   // 是否展示标尺
-  showRuler: true,
+  useRuler: true,
   // 是否使用定位线
   usePositionLine: true,
   positionLineConfig: {
@@ -199,7 +199,7 @@ export default class ScaleRuler {
     opt.horizontalPadding = opt.horizontalPadding || opt.padding;
     opt.verticalPadding = opt.verticalPadding || opt.padding;
     opt.containerEl.style.overflow = 'hidden';
-    if (opt.showRuler) {
+    if (opt.useRuler) {
       this._initRuler(resize);
     }
   }
@@ -644,7 +644,8 @@ export default class ScaleRuler {
     }
     canvas.style.width = opt.canvasWidth + 'px';
     canvas.style.height = opt.canvasHeight + 'px';
-    let { scale } = opt;
+    const originScale = opt.scale;
+    let scale = originScale;
     const { autoScale, autoCenter } = opt;
 
     // 自动计算缩放比例
@@ -665,7 +666,10 @@ export default class ScaleRuler {
       opt.canvasConfig.translateY = translateY;
     }
     this._setTranslateBoundary(realWidth, realHeight);
-    opt.scale = scale;
+    if (scale !== originScale) {
+      opt.scale = scale;
+      this._onScale();
+    }
     // 画布初始位置
     opt.canvasConfig.originTransform = {
       scale,
@@ -688,7 +692,7 @@ export default class ScaleRuler {
       canvasConfig.translateY
     }px) scale(${scale})`;
 
-    if (opt.showRuler) {
+    if (opt.useRuler) {
       this._repaintRuler(false);
       this._repaintRuler(true);
     }
@@ -1050,11 +1054,14 @@ export default class ScaleRuler {
     canvasConfig.translateX = translateX;
     canvasConfig.translateY = translateY;
     this._transformCanvas();
-    // 回调onScale
-    if (typeof opt.onScale === 'function') {
-      opt.onScale(opt.scale);
-    }
     this._checkLarge();
+    this._onScale();
+  }
+  _onScale() {
+    // 回调onScale
+    if (typeof this.opt.onScale === 'function') {
+      this.opt.onScale(this.opt.scale);
+    }
   }
   // 删除所有定位线
   removeAllPositionLine() {
@@ -1081,20 +1088,24 @@ export default class ScaleRuler {
       positionEl.style.display = 'block';
     }
   }
+  _toggleRuler(hide = true) {
+    const { opt } = this;
+    const display = hide ? 'none' : 'block';
+    if (opt.hRuler) opt.hRuler.style.display = display;
+    if (opt.vRuler) opt.vRuler.style.display = display;
+    // 同时显示/隐藏定位线
+    if (hide) {
+      this.hideAllPositionLine();
+    } else {
+      this.showAllPositionLine();
+    }
+  }
   // 隐藏标尺
   hideRuler() {
-    const { opt } = this;
-    if (opt.hRuler) opt.hRuler.display = 'none';
-    if (opt.vRuler) opt.vRuler.display = 'none';
-    // 同时隐藏定位线
-    this.hideAllPositionLine();
+    this._toggleRuler();
   }
   showRuler() {
-    const { opt } = this;
-    if (opt.hRuler) opt.hRuler.display = 'block';
-    if (opt.vRuler) opt.vRuler.display = 'block';
-    // 同时显示定位线
-    this.showAllPositionLine();
+    this._toggleRuler(false);
   }
   // 禁止缩放
   forbiddenScale() {
@@ -1106,8 +1117,14 @@ export default class ScaleRuler {
   }
   // 还原
   reset() {
-    const { originTransform } = this.opt.canvasConfig;
+    const { originTransform } = this.opt.canvasConfig
     if (originTransform) {
+      const { scale, translateX, translateY } = originTransform;
+      this.opt.scale = scale;
+      this.opt.canvasConfig.translateX = translateX;
+      this.opt.canvasConfig.translateY = translateY;
+      this._transformCanvas();
+      this._checkLarge();
     }
   }
 }

@@ -41,6 +41,11 @@
       <button id="btn2">删除定位线</button>
       <button id="btn3">隐藏定位线</button>
       <button id="btn4">显示定位线</button>
+      <button id="btn5">显示标尺</button>
+      <button id="btn6">隐藏标尺</button>
+      <button id="btn7">放大</button>
+      <button id="btn8">缩小</button>
+      <button id="btn9">还原</button>
     </aside>
     <main>
       <header>我是头部</header>
@@ -50,16 +55,18 @@
     <aside>lala</aside>
   </body>
   <script>
+    let _scale = 0;
     const ruler = new ScaleRuler({
       el: '#wrap',
       containerAutoSize: true,
       autoCenter: true,
-      // autoScale: false,
+      autoScale: true,
       canvasStyle: {
         backgroundColor: 'pink'
       },
       onScale(scale) {
-        // console.log({ scale });
+        console.log({ scale });
+        _scale = scale;
       },
       onMove(translateX, translateY) {
         // console.log({ translateX, translateY });
@@ -70,10 +77,6 @@
     // console.log(canvasEl);
 
     document.querySelector('#btn').onclick = function () {
-      // document.querySelector('#wrap').style.width = '90%';
-      // ruler.updateCanvasRect({
-      //   canvasHeight: 1200
-      // });
       let rect = document.createElement('div');
       rect.style.position = 'absolute';
       rect.style.width = '200px';
@@ -86,18 +89,35 @@
         { dir: 'x', value: 300 },
         { dir: 'x', value: 500 },
         { dir: 'y', value: 200 },
-        { dir: 'y', value: 500 },
+        { dir: 'y', value: 500 }
       ]);
     };
-		document.querySelector('#btn2').onclick = () => {
-			ruler.removeAllPositionLine();
-		}
-		document.querySelector('#btn3').onclick = () => {
-			ruler.hideAllPositionLine();
-		}
-		document.querySelector('#btn4').onclick = () => {
-			ruler.showAllPositionLine();
-		}
+    document.querySelector('#btn2').onclick = () => {
+      ruler.removeAllPositionLine();
+    };
+    document.querySelector('#btn3').onclick = () => {
+      ruler.hideAllPositionLine();
+    };
+    document.querySelector('#btn4').onclick = () => {
+      ruler.showAllPositionLine();
+    };
+    document.querySelector('#btn5').onclick = () => {
+      ruler.showRuler();
+    };
+    document.querySelector('#btn6').onclick = () => {
+      ruler.hideRuler();
+    };
+    document.querySelector('#btn7').onclick = () => {
+      _scale += 0.02;
+      ruler.changeScale(_scale);
+    };
+    document.querySelector('#btn8').onclick = () => {
+      _scale -= 0.02;
+      ruler.changeScale(_scale);
+    };
+    document.querySelector('#btn9').onclick = () => {
+      ruler.reset();
+    };
     console.log(ruler);
   </script>
 </html>

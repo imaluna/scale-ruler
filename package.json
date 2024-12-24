@@ -29,10 +29,15 @@
     "publish": "npm publish",
     "prepare": "husky install"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npx lint-staged"
+    }
+  },
   "lint-staged": {
     "src/**/*.{js,jsx,ts,tsx}": [
       "prettier --write",
-      "eslint --fix"
+      "eslint . --fix"
     ]
   },
   "author": "imaluna<https://github.com/imaluna/scale-ruler.git",
