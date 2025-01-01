@@ -20,7 +20,7 @@ const defaultOpt = {
   // 初始化是否自动居中
   autoCenter: true,
   // 初始化时是否自动计算画布缩放比例，此时忽略scale
-  autoScale: 1,
+  autoScale: true,
   // 是否自动计算容器的宽高，默认false，为true会监控container宽高变化并重新绘制
   containerAutoSize: false,
   // 容器宽度，containerAutoSize为true后，不取该值
@@ -363,13 +363,13 @@ export default class ScaleRuler {
           targetCoordinate.pageY >
           offset.top + rulerConfig.horizontalRulerHeight
             ? 'visible'
-            : 'none';
+            : 'hidden';
         translate = targetCoordinate.pageY - offset.top;
       } else {
         positionEl.style.visibility =
           targetCoordinate.pageX > offset.left + rulerConfig.verticalRulerWidth
             ? 'visible'
-            : 'none';
+            : 'hidden';
         translate = targetCoordinate.pageX - offset.left;
       }
       const coordinate = self._translateToCoordinate(opt, dir, translate);
@@ -811,7 +811,7 @@ export default class ScaleRuler {
       const newScale = this.opt.scale + changeScale;
       this.changeScale(newScale);
     } else {
-      // 单支
+      // 单指
       const {
         scrollConfig,
         containerConfig,
@@ -819,7 +819,7 @@ export default class ScaleRuler {
         hScrollBar,
         vScrollBar
       } = this.opt;
-      if (!containerConfig.isLarge || scrollConfig.isDown) return;
+      if (!containerConfig.isLarge || scrollConfig.isMouseDown) return;
       e.preventDefault();
       if (this.opt.wheelTimer) {
         clearTimeout(this.opt.wheelTimer);
