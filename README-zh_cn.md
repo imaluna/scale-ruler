@@ -91,6 +91,9 @@ ruler.allowScale()
 </script>
 ```
 
+[参考代码](https://github.com/imaluna/scale-ruler/blob/eac8a5a9399ef23bb4858a2f5c828a43ea9f32ad/examples/index.html#L123)
+
+
 ## 属性
 
 | 参数 | 说明 | 类型 | 默认值 | 备注

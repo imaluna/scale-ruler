@@ -97,6 +97,8 @@ ruler.allowScale()
 </script>
 ```
 
+[Reference code](https://github.com/imaluna/scale-ruler/blob/eac8a5a9399ef23bb4858a2f5c828a43ea9f32ad/examples/index.html#L123)
+
 ## Attributes
 
 | Attribute | Description | Type | Default | Remark
