@@ -72,9 +72,7 @@
     "lint-staged": "^15.2.11",
     "prettier": "^3.4.2",
     "rimraf": "^6.0.1",
-    "rollup": "^4.29.1"
-  },
-  "dependencies": {
+    "rollup": "^4.29.1",
     "deepmerge": "^4.3.1"
   }
 }
