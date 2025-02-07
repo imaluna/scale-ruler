@@ -9,6 +9,5 @@ examples/
 .prettierignore
 .prettierrc.js
 babel.config.js
-package-lock.json
 pnpm-lock.yaml
 README-zh_cn.md
