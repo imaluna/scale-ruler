@@ -1,0 +1,14 @@
+src/
+node_modules/
+build/
+.husky/
+examples/
+.eslintignore
+.eslintrc.js
+.gitignore
+.prettierignore
+.prettierrc.js
+babel.config.js
+package-lock.json
+pnpm-lock.yaml
+README-zh_cn.md

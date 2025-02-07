@@ -73,5 +73,8 @@
     "prettier": "^3.4.2",
     "rimraf": "^6.0.1",
     "rollup": "^4.29.1"
+  },
+  "dependencies": {
+    "deepmerge": "^4.3.1"
   }
 }

@@ -21,60 +21,136 @@
         display: flex;
         flex-direction: column;
         height: 100%;
+        box-sizing: border-box;
+        padding: 0 10px;
       }
       header,
       footer {
-        height: 100px;
         width: 100%;
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      header button {
+        background-color: #fff;
+        padding: 8px 15px;
+        font-size: 14px;
+        border-radius: 4px;
+        display: inline-flex;
+        height: 32px;
+        justify-content: center;
+        line-height: 1;
+        outline: none;
+        border: 1px solid #dcdfe6;
+        cursor: pointer;
+        color: rgb(96, 98, 102);
+        font-weight: 500;
+      }
+      header button + button {
+        margin-right: 10px;
+      }
+      header button:hover {
+        color: rgb(64, 158, 255);
+        background-color: rgb(236, 245, 255);
+        border-color: rgb(198, 226, 255);
       }
       #wrap {
         width: 100%;
         flex: 1;
         box-sizing: border-box;
-        border: 12px solid #ddd;
+        margin-bottom: 10px;
+      }
+      .mr-10 {
+        margin-right: 10px;
+      }
+      .adsorption span {
+        font-size: 14px;
+        color: rgb(96, 98, 102);
+        font-weight: 500;
+      }
+      .adsorption input {
+        outline: none;
+        box-sizing: border-box;
+        color: rgb(96, 98, 102);
+        border: 1px solid #dcdfe6;
+        padding: 0 10px;
+        font-size: 14px;
+        line-height: 30px;
+        border-radius: 4px;
+        width: 200px;
+      }
+      .adsorption input:focus {
+        border-color: rgb(64, 158, 255);
       }
     </style>
   </head>
   <body>
-    <aside>
-      <button id="btn">点击改变</button>
-      <button id="btn2">删除定位线</button>
-      <button id="btn3">隐藏定位线</button>
-      <button id="btn4">显示定位线</button>
-      <button id="btn5">显示标尺</button>
-      <button id="btn6">隐藏标尺</button>
-      <button id="btn7">放大</button>
-      <button id="btn8">缩小</button>
-      <button id="btn9">还原</button>
-    </aside>
     <main>
-      <header>我是头部</header>
+      <header>
+        <button id="btn">添加元素</button>
+        <button id="btn2">删除定位线</button>
+        <button id="btn3">隐藏定位线</button>
+        <button id="btn4">显示定位线</button>
+        <button id="btn5">显示标尺</button>
+        <button id="btn6">隐藏标尺</button>
+        <button id="btn7">放大</button>
+        <button id="btn8">缩小</button>
+        <button id="btn9">还原</button>
+      </header>
       <div id="wrap"></div>
-      <footer>我是底部</footer>
+      <footer>
+        <div class="mr-10 adsorption">
+          <span>吸附线x：</span>
+          <input id="adsorptionX" type="text" />
+        </div>
+        <div class="adsorption">
+          <span>吸附线Y：</span>
+          <input id="adsorptionY" type="text" />
+        </div>
+      </footer>
     </main>
-    <aside>lala</aside>
   </body>
   <script>
     let _scale = 0;
-    const ruler = new ScaleRuler({
+    const inputX = document.querySelector('#adsorptionX');
+    const inputY = document.querySelector('#adsorptionY');
+    let adsorptionXList = [
+      100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400,
+      1500, 1600, 1700, 1800
+    ];
+    let adsorptionYList = [100, 200, 300, 400, 500, 600, 700, 800, 900];
+    const opt = {
       el: '#wrap',
       containerAutoSize: true,
       autoCenter: true,
       autoScale: true,
       canvasStyle: {
-        backgroundColor: 'pink'
+        backgroundColor: '#fff'
+      },
+      positionLineConfig: {
+        adsorptionXList,
+        adsorptionYList
       },
       onScale(scale) {
-        console.log({ scale });
         _scale = scale;
       },
       onMove(translateX, translateY) {
-        // console.log({ translateX, translateY });
+      },
+      adsorptionLineChange(list, isY) {
+        if (isY) {
+          adsorptionYList = list;
+        } else {
+          adsorptionXList = list;
+        }
+        setInputValue(list, isY);
+      },
+      positionLineChange(list, isY) {
       }
-    });
+    };
+    const ruler = new ScaleRuler(opt);
     const canvasEl = ruler.getCanvasEl();
-    canvasEl.innerHTML = '我的内容';
-    // console.log(canvasEl);
+    // canvasEl.innerHTML = '我的内容';
 
     document.querySelector('#btn').onclick = function () {
       let rect = document.createElement('div');
@@ -85,12 +161,8 @@
       rect.style.left = '300px';
       rect.style.top = '200px';
       canvasEl.appendChild(rect);
-      ruler.addAdsorptionLine([
-        { dir: 'x', value: 300 },
-        { dir: 'x', value: 500 },
-        { dir: 'y', value: 200 },
-        { dir: 'y', value: 500 }
-      ]);
+      ruler.addAdsorptionLine([300, 500], false);
+      ruler.addAdsorptionLine([200, 500], true);
     };
     document.querySelector('#btn2').onclick = () => {
       ruler.removeAllPositionLine();
@@ -118,6 +190,33 @@
     document.querySelector('#btn9').onclick = () => {
       ruler.reset();
     };
-    console.log(ruler);
+    inputX.onblur = changeXInput;
+    inputY.onblur = changeYInput;
+    function setInputValue(list, isY) {
+      const str = list.join(',');
+      if (isY) {
+        inputY.value = str;
+      } else {
+        inputX.value = str;
+      }
+    }
+    function changeXInput() {
+      changeInput(false);
+    }
+    function changeYInput() {
+      changeInput(true);
+    }
+    function changeInput(isY) {
+      const str = isY ? inputY.value : inputX.value;
+      const list = str
+        .split(',')
+        .filter((item) => /^\d+$/.test(item))
+        .map(Number).sort();
+      const originList = isY ? adsorptionYList : adsorptionXList;
+      if (originList.join(',') !== list.join(',')) {
+        ruler.removeAdsorptionLine(originList, isY)
+        ruler.addAdsorptionLine(list, isY)
+      }
+    }
   </script>
 </html>
